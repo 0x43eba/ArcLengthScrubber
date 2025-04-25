@@ -1,14 +1,27 @@
 import serial
 import logging
 import struct
-
-MAGIC = b'\xFE\xED\xFA\xCE'  # Big-endian FEEDFACE
-START_BYTE = b'\xAA'
-HEADER_LEN = 4
-SENSOR_STRUCT_LEN = 6  # 3 x int16_t
+from dataclasses import dataclass
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
+
+MAGIC = b'\xFE\xED\xFA\xCE'
+START_BYTE = b'\xAA'
+HEADER_LEN = 4
+SENSOR_STRUCT_LEN = 6
+
+@dataclass
+class SensorData:
+    x: int
+    y: int
+    z: int
+
+def parse_sensor_data(data: bytes) -> SensorData:
+    if len(data) != SENSOR_STRUCT_LEN:
+        raise ValueError("Invalid data length")
+    x, y, z = struct.unpack('<hhh', data)
+    return SensorData(x, y, z)
 
 try:
     ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
@@ -25,7 +38,7 @@ try:
         if not synced:
             buffer += byte
             if len(buffer) > HEADER_LEN:
-                buffer = buffer[-HEADER_LEN:]  # keep last 4 bytes
+                buffer = buffer[-HEADER_LEN:]
             if buffer == MAGIC:
                 synced = True
                 logger.info("Detected 0xFEEDFACE — now reading data packets...")
@@ -35,7 +48,7 @@ try:
             payload = ser.read(SENSOR_STRUCT_LEN)
             if len(payload) != SENSOR_STRUCT_LEN:
                 continue
-            x, y, z = struct.unpack('<hhh', payload)  # little-endian 3x int16_t
+            x, y, z = struct.unpack('<hhh', payload)
             logger.info(f"X: {x}, Y: {y}, Z: {z}")
 
 except serial.SerialException as e:
