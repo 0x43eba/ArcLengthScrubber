@@ -36,9 +36,11 @@ void loop() {
   int16_t x = accel.cx * 1000;
   int16_t y = accel.cy * 1000;
   int16_t z = accel.cz * 1000;
-  
+
   SensorDataOutput data = {x, y, z};
   Serial.write(0xAA);
-  Serial.write((uint8_t*)&data, sizeof(data));
+  uint8_t buffer[sizeof(data)];
+  memcpy(buffer, &data, sizeof(data));
+  Serial.write(buffer, sizeof(data));
   delay(500);
 }
