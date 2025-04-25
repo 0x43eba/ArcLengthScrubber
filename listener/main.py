@@ -23,41 +23,49 @@ def parse_sensor_data(data: bytes) -> SensorData:
     x, y, z = struct.unpack('<hhh', data)
     return SensorData(x, y, z)
 
-try:
-    ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-    logger.info("Listening on /dev/ttyACM0 at 9600 baud...")
+def process_sensor_data(x: int, y: int, z: int):
+    pass
 
-    buffer = bytearray()
-    synced = False
+def serial_reader():
+    try:
+        ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+        logger.info("Listening on /dev/ttyACM0 at 9600 baud...")
 
-    while True:
-        byte = ser.read(1)
-        if not byte:
-            continue
+        buffer = bytearray()
+        synced = False
 
-        if not synced:
-            buffer += byte
-            if len(buffer) > HEADER_LEN:
-                buffer = buffer[-HEADER_LEN:]
-            if buffer == MAGIC:
-                synced = True
-                logger.info("Detected 0xFEEDFACE — now reading data packets...")
-        else:
-            if byte != START_BYTE:
+        while True:
+            byte = ser.read(1)
+            if not byte:
                 continue
-            payload = ser.read(SENSOR_STRUCT_LEN)
-            if len(payload) != SENSOR_STRUCT_LEN:
-                continue
-            x, y, z = struct.unpack('<hhh', payload)
-            logger.info(f"X: {x}, Y: {y}, Z: {z}")
 
-except serial.SerialException as e:
-    logger.error(f"Serial error: {e}")
+            if not synced:
+                buffer += byte
+                if len(buffer) > HEADER_LEN:
+                    buffer = buffer[-HEADER_LEN:]
+                if buffer == MAGIC:
+                    synced = True
+                    logger.info("Detected 0xFEEDFACE — now reading data packets...")
+            else:
+                if byte != START_BYTE:
+                    continue
+                payload = ser.read(SENSOR_STRUCT_LEN)
+                if len(payload) != SENSOR_STRUCT_LEN:
+                    continue
+                x, y, z = struct.unpack('<hhh', payload)
+                process_sensor_data(x, y, z)
+                logger.debug(f"X: {x}, Y: {y}, Z: {z}")
 
-except KeyboardInterrupt:
-    logger.info("Stopped by user.")
+    except serial.SerialException as e:
+        logger.error(f"Serial error: {e}")
 
-finally:
-    if 'ser' in locals() and ser.is_open:
-        ser.close()
-        logger.info("Serial port closed.")
+    except KeyboardInterrupt:
+        logger.info("Stopped by user.")
+
+    finally:
+        if 'ser' in locals() and ser.is_open:
+            ser.close()
+            logger.info("Serial port closed.")
+
+if __name__ == "__main__":
+    serial_reader()
