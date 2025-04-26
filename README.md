@@ -5,8 +5,10 @@ to control a musical track.
 
 ### tilt-sensor
 
-This is the code itself. We transmit the tilt sensor data as a compact buffer over the serial port.
+This is the code itself. We transmit the tilt sensor data as a compact buffer over the serial port. This data is transmitted in a six-byte packet.
 
 ### listener
 
 This is the "client" for this setup. We're using this to pick up and manipulate the code from the embedded system.
+
+![image](https://github.com/user-attachments/assets/0d9b4b30-a982-4bd9-952a-2960bdac18b9)
