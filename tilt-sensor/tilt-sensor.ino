@@ -19,7 +19,7 @@ void send32(uint32_t val) {
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(38400);
   Wire.begin();
 
   if (!accel.begin()) {
@@ -42,5 +42,5 @@ void loop() {
   uint8_t buffer[sizeof(data)];
   memcpy(buffer, &data, sizeof(data));
   Serial.write(buffer, sizeof(data));
-  delay(500);
+  delay(10);
 }
